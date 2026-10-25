@@ -2,193 +2,134 @@
 
 A parametric **OpenSCAD cabinet generator for CNC-cut arcade and virtual pinball builds**.
 
-The project is designed around a single configurable OpenSCAD source file. You can preview a complete cabinet in 3D, choose a built-in cabinet preset or define your own dimensions, then export individual 2D wood or acrylic parts for CAM.
+Set a screen size, a cabinet style and your stock thickness; the generator derives a closed, buildable cabinet, previews it in 3D, exports every panel as a 2D part for CAM and prints a cut list.
 
-> **Units:** millimeters. Production dimensions should always be checked against your actual monitor, controls, hardware, and measured sheet thickness before cutting.
+> **Units:** millimetres. Check production dimensions against your actual monitor, controls, hardware and measured sheet thickness before cutting.
+
+![Default stand-up: assembly, front, cutaway, wood sheet](docs/renders/default_standup.png)
 
 ## Features
 
-- Stand-up arcade, bartop arcade, full virtual pinball, and bartop virtual pinball cabinet modes.
-- Reference-plan presets: `tinyarcade_bartop`, `koenigs_mame`, `compact_1600`, `asteroids`, `classic_80s`, `we_build_stuff`, and `vpin_731x1308`, plus fully custom mode.
-- Screen-driven cabinet sizing with configurable visible screen dimensions, bezel margins, cutout clearance, screen rotation, corner radius, and monitor recline angle.
-- Configurable control-to-screen clearance so the monitor/bezel does not overhang the control panel.
-- One- or two-player arcade control layouts with 4–8 action buttons per player.
-- Joystick shaft and mounting holes, trackball/roller-ball opening and mounting holes, auxiliary buttons, and optional admin controls.
-- Control-panel fascia, keyboard drawer, coin door, rear service door, horizontal speaker shelf, and front-facing speaker baffle options.
-- Marquee, monitor, control-panel, and virtual-pinball acrylic/plexiglass parts.
-- Fixed or adjustable VESA monitor mounting. The adjustable version uses a VESA carrier and two slotted CNC-cut side rails for post-assembly depth adjustment.
-- Screw-guide or tab/slot panel joinery, including optional dogbone relief for routed slots.
-- Decimal material and acrylic thickness inputs such as `18.25` mm plywood and `3.175` mm acrylic.
-- Complete virtual-pinball backbox support with display opening, speaker openings, optional DMD opening, rear panel, top/bottom, sides, and plexiglass.
-- Individual part export plus overview wood/acrylic sheet modes.
+- Stand-up arcade, bartop arcade, full-size virtual pinball and bartop virtual pinball styles.
+- **Screen-driven sizing.** Width, depth, head height and the whole side profile are solved from the visible screen size, margins, recline and control-panel geometry. Enter a cabinet width/depth/height only if you want to force one.
+- **Closed by construction.** The side profile is generated from the stack of cross panels (top, marquee frame, upper bezel, screen panel, lower bezel, control panel, fascia, kick panel, front panel, rear panel, floor). Every face of the profile is covered, every butt joint is trimmed for stock thickness, and the geometry is checked by asserts (door and drawer openings fit their panels, the screen fits inside the body, the control panel clears the screen).
+- Reference presets: `tinyarcade_bartop`, `koenigs_mame`, `compact_1600`, `asteroids`, `classic_80s`, `we_build_stuff`, `vpin_731x1308`, plus `custom`.
+- One or two players, 4 to 8 buttons in a grid or arc layout, joystick and trackball hole patterns from named hardware templates, auxiliary and admin buttons on the fascia.
+- Marquee with a real window and plexi, speaker holes in the upper bezel, coin door, keyboard drawer, rear service door with vents, cable hole, leveler holes.
+- Fixed or adjustable VESA monitor mount (slotted rails for post-assembly depth adjustment).
+- Joinery: screw guide holes, through tab/slot, or blind pockets (tab depth less than the stock) exported as separate pocket drawings for CAM.
+- Virtual pinball: sloped playfield solved for the screen, apron, rear deck, legs and a full backbox with display, speaker and DMD openings.
+- Output modes: 3D assembly (with cutaway), single 2D part, wood and plexi sheet overviews, bill of materials and part list in the console.
 
 ## Requirements
 
-- [OpenSCAD](https://openscad.org/)
-- A CAM package capable of importing DXF or SVG for toolpath generation
-- CNC router, laser, or other suitable sheet-cutting workflow
-
-The generator creates geometry; **cutter compensation, feeds/speeds, hold-down strategy, and final sheet nesting belong in CAM**.
+- [OpenSCAD](https://openscad.org/) 2021.01 or newer.
+- A CAM package that imports DXF or SVG. Cutter compensation, feeds and speeds, hold-down and final nesting belong in CAM; the generator produces nominal geometry.
 
 ## Quick start
 
-Open `arcade_cabinet_workshop.scad` in OpenSCAD and edit the parameters near the top of the file.
+Open `arcade_cabinet_workshop.scad` in OpenSCAD. Every parameter is in that file, grouped for the Customizer. The `lib/` folder holds the implementation and does not need editing.
 
 ```scad
-design_preset = "custom";
-cabinet_style = "standup";   // standup, bartop, vpin, vpin_bartop
+cabinet_style = "standup";      // standup, bartop, vpin, vpin_bartop
+material_thickness = 18.0;
+plexi_thickness = 3.0;
 
-material_thickness = 18.25;
-plexi_thickness = 3.175;
-
-screen_width = 531;
+screen_width = 531;             // visible area of your monitor
 screen_height = 299;
 screen_recline_angle = 8;
-control_to_screen_clearance = 30;
 
 players = 2;
 buttons_per_player = 6;
-trackball_enabled = false;
+button_layout = "arc";          // grid or arc
 
 output_mode = "assembly";
 ```
 
-Render the assembly first and confirm the cabinet proportions before exporting parts.
+1. Render the assembly and check the proportions. Turn on `show_cutaway` to see the interior.
+2. Set `output_mode = "bom"` (F5) to read the cut list and overall size in the console.
+3. Set `output_mode = "part_list"` to see the part names available for this configuration, then `output_mode = "part"` with `part_name = "left_side"` and export DXF or SVG for each part.
+4. `wood_sheet` and `plexi_sheet` draw every part in rows for a quick overview. They are not an optimised nest.
 
-## Built-in presets
+### Command line
 
-| Preset | General style | Notes |
+All parameters can be overridden with `-D`, which makes the generator easy to drive from scripts or a web front end:
+
+```sh
+openscad -o left_side.dxf -D 'output_mode="part"' -D 'part_name="left_side"' arcade_cabinet_workshop.scad
+openscad -o bom.echo --export-format=echo -D 'output_mode="bom"' -D 'screen_width=598' -D 'screen_height=336' arcade_cabinet_workshop.scad
+```
+
+`tests/render_all.sh` renders every preset in every output mode plus every part and fails on any OpenSCAD warning, error or assertion. `tests/view.scad` is a render wrapper for fixed-camera PNGs (iso, side, cutaway, front, part, sheet).
+
+## How the geometry is derived
+
+The side profile is a closed polygon built from a list of faces, each of which may carry a cross panel. The main chain for an arcade cabinet, going up the front:
+
+```
+floor -> front panel -> kick panel -> control fascia -> control panel -> lower bezel
+      -> screen panel -> upper bezel -> marquee frame -> top panel -> rear panel
+```
+
+Key dimensions and what drives them:
+
+| Dimension | Driven by |
+| --- | --- |
+| Inner width | `screen_width + 2 * screen_side_margin`, or the player layout if that is wider |
+| Screen panel length | `screen_height + 2 * screen_top_bottom_margin` |
+| Screen panel position | `screen_gap_above_control` and `control_to_screen_clearance` from the control panel's rear edge |
+| Head height | screen top, `standup_neck_rise`, marquee height. `cabinet_height` adds to the upper bezel if larger |
+| Cabinet depth | `cabinet_depth` or an automatic value per style |
+| Pinball depth | `vpin_rear_step + sqrt((screen_len + apron)^2 - rise^2)` when `cabinet_depth = 0` |
+
+`panel_inset` sets every cross panel in from the side-panel edge (T-moulding reveal). Tab/slot joinery needs an inset large enough to keep the slots inside the side panel; the generator asserts the minimum.
+
+## Presets
+
+| Preset | Style | Notes |
 | --- | --- | --- |
-| `custom` | Free-form | Uses your configured dimensions directly. |
-| `tinyarcade_bartop` | Curved bartop | Compact curved monitor/control transition. |
-| `koenigs_mame` | MAME upright | Traditional upright derived from the supplied reference plan. |
-| `compact_1600` | Compact upright | 1600 mm-class cabinet with a pronounced curved neck. |
-| `asteroids` | Large classic upright | Includes speaker baffle, admin area, keyboard drawer, coin door, and rear service door defaults. |
-| `classic_80s` | Traditional 1980s upright | Approximate classic proportions where the source drawing lacked readable dimensions. |
-| `we_build_stuff` | Angular upright | Strong angular side profile and projected control deck. |
-| `vpin_731x1308` | Full virtual pinball | Lower playfield cabinet plus backbox. |
+| `tinyarcade_bartop` | bartop | 10.1 in screen, 1 player, no marquee overhang |
+| `koenigs_mame` | standup | 636 wide, keyboard drawer |
+| `compact_1600` | standup | 1600 tall, 600 wide |
+| `asteroids` | standup | 1892 tall, tall fascia, keyboard drawer and coin door. The drawn 1050 mm control height is high for most players |
+| `classic_80s` | standup | 650 x 650 x 1850 |
+| `we_build_stuff` | standup | 24 in screen, trackball |
+| `vpin_731x1308` | vpin | 49 in portrait screen in a 1308 deep body, backbox |
 
-Preset groups can be overridden independently:
+A preset sets the parameters listed for it in `lib/presets.scad`, grouped as geometry, material, screen and controls. Each group can be switched off (`preset_use_*`) to combine, for example, a preset's body with your own screen.
 
-```scad
-preset_use_plan_geometry = true;
-preset_use_plan_material = true;
-preset_use_plan_screen = true;
-preset_use_plan_controls = true;
+![Presets](docs/renders/presets.png)
+![Preset cutaways](docs/renders/preset_cutaways.png)
+
+## Hardware templates
+
+`lib/hardware.scad` holds the joystick, trackball and button hole patterns (`sanwa_jlf`, `happ_competition`, `u_trak`, `japanese_30`, `japanese_24`, `american_28`). The values are nominal catalogue dimensions. **Measure your parts before cutting** and add a template if yours differ.
+
+## Joinery and CAM notes
+
+- `screw`: pilot holes in the side panels along each cross panel's centre line.
+- `tab_slot` with `joinery_tab_depth >= material_thickness`: through slots in the sides, tabs on the cross panels, optional dogbone relief sized from `tool_diameter`.
+- `tab_slot` with a smaller tab depth: blind pockets. The side-panel outline exports as `left_side` / `right_side` and the pocket outlines as `left_side_pockets` / `right_side_pockets`; cut the pockets to `joinery_tab_depth` before the profile.
+- Inside corners of openings use the larger of the configured corner radius and the tool radius.
+
+![Side panel with tab slots, blind pockets, pinball sheet](docs/renders/parts.png)
+
+## Project layout
+
+```
+arcade_cabinet_workshop.scad   all parameters, includes lib/, output dispatch
+lib/presets.scad               preset table and cfg() lookup
+lib/hardware.scad              joystick / trackball / button templates
+lib/geometry.scad              derived dimensions, face list, panel records, asserts
+lib/joinery.scad               tabs, slots, pockets, dogbones
+lib/parts2d.scad               2D drawing of every part
+lib/assembly.scad              3D placement
+lib/export.scad                part export, sheet layouts, BOM
+tests/render_all.sh            renders every preset, mode and part; fails on warnings
+tests/view.scad                PNG render wrapper
+docs/renders/                  sample renders
 ```
 
-For example, keep a preset silhouette but use your measured plywood and monitor dimensions by disabling only the relevant preset groups.
+## License
 
-## Monitor and VESA mounting
-
-The monitor angle is expressed in degrees from vertical:
-
-```scad
-screen_recline_angle = 8;
-```
-
-A positive value leans the top of the monitor toward the rear of the cabinet, so the display faces slightly upward.
-
-The control-to-screen spacing is independently adjustable:
-
-```scad
-control_to_screen_clearance = 30.0;
-```
-
-The internal monitor mount supports fixed and adjustable modes:
-
-```scad
-vesa_mount_panel_enabled = true;
-vesa_mount_style = "adjustable"; // fixed or adjustable
-
-vesa_pattern_x = 100;
-vesa_pattern_y = 100;
-
-vesa_adjust_min_setback = 40;
-vesa_adjust_max_setback = 120;
-vesa_panel_setback = 70;          // assembly preview position
-```
-
-In adjustable mode, cut one VESA carrier and **two** `vesa_adjust_rail` parts. The slotted rails allow the display depth to be tuned after the cabinet is assembled.
-
-## Player controls
-
-```scad
-players = 2;              // 1 or 2
-buttons_per_player = 6;   // 4 through 8
-include_joysticks = true;
-
-trackball_enabled = true;
-aux_button_count = 4;
-aux_button_location = "front"; // control, front, or both
-```
-
-Joystick mounting-hole spacing, action-button spacing, trackball cutout diameter, mount-hole patterns, and auxiliary-button sizes are all parameterized.
-
-## Joinery
-
-Choose plain panels, screw alignment holes, or routed tab-and-slot construction:
-
-```scad
-panel_joinery = "tab_slot"; // none, screw, tab_slot
-
-joinery_count = 2;
-joinery_tab_width = 38.0;
-joinery_tab_depth = 8.0;
-joinery_slot_clearance = 0.25;
-joinery_dogbone_relief = true;
-```
-
-For screw construction, configure `joinery_screw_hole_diameter`. For tab/slot construction, test your real tool, material, and fit on scrap before cutting the cabinet.
-
-## Exporting CNC parts
-
-Use assembly mode for design review:
-
-```scad
-output_mode = "assembly";
-```
-
-For an individual wood part:
-
-```scad
-output_mode = "part";
-part_material = "wood";
-part_name = "left_side";
-```
-
-For acrylic:
-
-```scad
-output_mode = "part";
-part_material = "plexi";
-part_name = "screen_plexi";
-```
-
-Then export the 2D geometry from OpenSCAD as DXF or SVG and create the final toolpaths in CAM.
-
-Common wood part names include:
-
-`left_side`, `right_side`, `control_panel`, `control_fascia`, `admin_panel`, `keyboard_drawer_front`, `keyboard_drawer_shelf`, `screen_panel`, `vesa_mount_panel`, `vesa_adjust_rail`, `front_panel`, `rear_panel`, `rear_service_door`, `coin_door`, `bottom_panel`, `top_panel`, `marquee_panel`, `speaker_panel`, `speaker_baffle`, and the virtual-pinball backbox panels.
-
-Common acrylic part names include:
-
-`control_plexi`, `screen_plexi`, `marquee_plexi`, and `vpin_backbox_plexi`.
-
-## CNC workflow notes
-
-1. Enter the measured thickness of the actual stock you will cut.
-2. Set the real monitor opening and VESA pattern from the manufacturer's drawing.
-3. Confirm control hardware dimensions, especially joystick and trackball mounting patterns.
-4. Preview the full assembly in OpenSCAD and inspect clearances.
-5. Export one production part at a time as DXF/SVG.
-6. Apply inside/outside cutter compensation, tabs, feeds/speeds, and sheet nesting in CAM.
-7. Test tab/slot fit and critical hardware holes in scrap material before committing a full sheet.
-
-## Important manufacturing checks
-
-Reference-plan presets are intended as useful starting points, not substitutes for measuring your hardware. Before machining, verify monitor body depth and connector clearance, VESA spacing, button and joystick dimensions, trackball geometry, hinges/slides/door hardware, ventilation requirements, material thickness, router diameter, and your CAM compensation strategy.
-
-## Current source version
-
-The repository currently contains the v7 generator developed through the Arcade Cabinet Workshop design iterations.
+See the repository license.
