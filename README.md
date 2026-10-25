@@ -19,7 +19,19 @@ Set a screen size, a cabinet style and your stock thickness; the generator deriv
 - Fixed or adjustable VESA monitor mount (slotted rails for post-assembly depth adjustment).
 - Joinery: screw guide holes, through tab/slot, or blind pockets (tab depth less than the stock) exported as separate pocket drawings for CAM.
 - Virtual pinball: sloped playfield solved for the screen, apron, rear deck, legs and a full backbox with display, speaker and DMD openings.
-- Output modes: 3D assembly (with cutaway), single 2D part, wood and plexi sheet overviews, bill of materials and part list in the console.
+- Output modes: 3D assembly (with cutaway), single 2D part, wood and plexi sheet overviews, bill of materials and part list in the console, plus `scene` / `all_sheet` for external viewers such as the web app.
+
+## Web app
+
+The `web/` folder holds a browser-only front end: pick a monitor, a style and your stock, watch the 3D preview update, and download a zip with a DXF and SVG for every part, the sheet layouts and the cut list. OpenSCAD runs in the browser as WebAssembly, so nothing is uploaded. It is published with GitHub Pages from `main` by `.github/workflows/pages.yml` (set the Pages source to "GitHub Actions" once in the repository settings). To run it locally:
+
+```sh
+web/build.sh _site && python3 -m http.server -d _site 8000
+```
+
+![Web app](docs/renders/web_app.png)
+
+See `web/README.md` for how it drives the generator (`output_mode = "scene"` and `"all_sheet"`).
 
 ## Requirements
 
@@ -127,6 +139,8 @@ lib/assembly.scad              3D placement
 lib/export.scad                part export, sheet layouts, BOM
 tests/render_all.sh            renders every preset, mode and part; fails on warnings
 tests/view.scad                PNG render wrapper
+web/                           browser front end (OpenSCAD WebAssembly, Three.js preview, zip export)
+.github/workflows/             render tests on every push; GitHub Pages deployment of web/
 docs/renders/                  sample renders
 ```
 

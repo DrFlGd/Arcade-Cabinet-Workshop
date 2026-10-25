@@ -14,7 +14,7 @@ run() { # name, extra -D args...
   if echo "$log" | grep -qiE 'WARNING|ERROR|assert'; then echo "FAIL $name"; echo "$log" | grep -iE 'WARNING|ERROR|assert' | head -5; fail=1; else echo "ok   $name"; fi
 }
 for p in $PRESETS; do
-  for m in assembly wood_sheet plexi_sheet bom part_list; do run "${p}_${m}" -D "design_preset=\"$p\"" -D "output_mode=\"$m\""; done
+  for m in assembly wood_sheet plexi_sheet all_sheet scene bom part_list; do run "${p}_${m}" -D "design_preset=\"$p\"" -D "output_mode=\"$m\""; done
   # every part listed for this preset
   parts=$(grep -oE '^ECHO: "  [a-z_]+' "$OUT/${p}_part_list.echo" | awk '{print $3}')
   for part in $parts; do run "${p}_part_${part}" -D "design_preset=\"$p\"" -D 'output_mode="part"' -D "part_name=\"$part\""; done

@@ -1,0 +1,15 @@
+# Renders every preset, output mode and part with OpenSCAD and fails on any
+# warning, error or assertion.
+name: Render tests
+on:
+  push:
+  pull_request:
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OpenSCAD
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends openscad
+      - name: Render everything
+        run: tests/render_all.sh "$RUNNER_TEMP/renders"

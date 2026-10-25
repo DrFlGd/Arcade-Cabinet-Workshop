@@ -17,7 +17,7 @@
 
 /* [Output] */
 // assembly = 3D preview; part = one 2D part for DXF/SVG; wood_sheet / plexi_sheet = overview layouts; bom = cut list in the console; part_list = names available for part_name
-output_mode = "assembly"; // [assembly,part,wood_sheet,plexi_sheet,bom,part_list,none]
+output_mode = "assembly"; // [assembly,part,wood_sheet,plexi_sheet,all_sheet,bom,part_list,scene,none]
 part_name = "left_side"; // [left_side,right_side,left_side_pockets,right_side_pockets,front_panel,kick_panel,control_fascia,control_panel,lower_bezel,screen_panel,upper_bezel,marquee_frame,marquee_shelf,top_panel,rear_panel,rear_service_door,coin_door,bottom_panel,keyboard_drawer_front,keyboard_drawer_shelf,vesa_mount_panel,vesa_adjust_rail,vpin_apron,vpin_playfield,vpin_rear_deck,vpin_backbox_side,vpin_backbox_front,vpin_backbox_rear,vpin_backbox_top,vpin_backbox_bottom,control_plexi,screen_plexi,marquee_plexi,vpin_backbox_plexi]
 show_plexi_preview = true;
 show_screen_preview = true;
@@ -285,12 +285,15 @@ include <lib/joinery.scad>
 include <lib/parts2d.scad>
 include <lib/assembly.scad>
 include <lib/export.scad>
+include <lib/scene.scad>
 
 // ---------- Main ----------
 if (output_mode == "assembly") assembly();
 else if (output_mode == "part") export_named_part(part_name);
 else if (output_mode == "wood_sheet") wood_sheet_2d();
 else if (output_mode == "plexi_sheet") plexi_sheet_2d();
+else if (output_mode == "all_sheet") all_sheet_2d();
+else if (output_mode == "scene") print_scene();
 else if (output_mode == "bom") print_bom();
 else if (output_mode == "part_list") print_part_list();
 else if (output_mode == "none") {}

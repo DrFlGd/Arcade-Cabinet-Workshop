@@ -1,5 +1,11 @@
 # Changelog
 
+## v8.1 (2026-10-25)
+
+- Web app in `web/`: browser-only configurator with monitor picker, generated parameter form, 3D preview, parts gallery, sheet layout, cut list, zip export (DXF + SVG per part) and shareable links. OpenSCAD runs as WebAssembly in a worker pool.
+- Generator: `output_mode = "scene"` (JSON lines with overall size, cut list, layout rects and 3D placement matrices) and `"all_sheet"` (every outline in one drawing) for external viewers.
+- GitHub Actions: render tests on every push and pull request; GitHub Pages deployment of the web app from `main`.
+
 ## v8 (2026-10-25)
 
 Rewrite of the generator. The v7 file was a single hand-tuned script whose side profile was drawn independently of the panels it had to hold, which left the cabinet open behind the head, the rear panel short, no panels above or below the screen, the fascia hanging below the profile and the pinball playfield running under the backbox.
