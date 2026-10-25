@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arcade Cabinet Workshop</title>
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<script src="./vendor/jszip.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">▣</span> Arcade Cabinet Workshop</div>
+  <div id="status" class="busy">Loading…</div>
+  <div class="actions">
+    <button id="reset" class="ghost" title="Back to the generator defaults">Reset</button>
+    <button id="share" class="ghost" title="Copy a link that reproduces this configuration">Copy link</button>
+    <button id="download" disabled title="DXF and SVG for every part, sheet layouts, cut list">Download parts (zip)</button>
+  </div>
+</header>
+<main>
+  <aside id="sidebar">
+    <section class="card">
+      <h2>Screen</h2>
+      <label class="field"><span class="field-label">Monitor</span>
+        <select id="monitor-select"></select>
+        <small>Sizes are computed from the diagonal and aspect ratio. Measure the real active area before cutting.</small></label>
+      <div class="row">
+        <label class="field"><span class="field-label">Active width (mm)</span><input id="screen_width" type="number" step="1"></label>
+        <label class="field"><span class="field-label">Active height (mm)</span><input id="screen_height" type="number" step="1"></label>
+      </div>
+      <label class="field"><span class="field-label">Max cabinet width I can fit (mm, optional)</span><input id="fit-width" type="number" step="10" placeholder="e.g. 650">
+        <small>Monitors that would need a wider cabinet are greyed out in the list.</small></label>
+      <p id="screen-need" class="hint"></p>
+    </section>
+    <section class="card">
+      <h2>Cabinet</h2>
+      <div id="simple-fields"></div>
+    </section>
+    <section class="card">
+      <h2>All parameters</h2>
+      <p class="hint">Every value the generator accepts, grouped as in the OpenSCAD Customizer. Changed values are marked.</p>
+      <div id="advanced-groups"></div>
+    </section>
+  </aside>
+  <section id="content">
+    <div id="messages" class="hidden"></div>
+    <div id="summary" class="summary"></div>
+    <nav class="tabs">
+      <button class="tab active" data-pane="pane-3d">3D preview</button>
+      <button class="tab" data-pane="pane-parts">Parts</button>
+      <button class="tab" data-pane="pane-sheet">Sheet layout</button>
+      <button class="tab" data-pane="pane-bom">Cut list</button>
+      <label class="toggle"><input type="checkbox" id="cutaway"> Cutaway</label>
+    </nav>
+    <div id="pane-3d" class="pane active"><div id="viewer"></div></div>
+    <div id="pane-parts" class="pane"><div id="parts-grid" class="parts-grid"></div></div>
+    <div id="pane-sheet" class="pane"><p class="hint">All parts in rows, wood and plexi together, for a size check. Nest them properly in your CAM software.</p><div id="sheet-view" class="sheet-view"></div></div>
+    <div id="pane-bom" class="pane"><table id="bom-table"><thead><tr><th>Part</th><th>Material</th><th class="num">Width (mm)</th><th class="num">Length (mm)</th><th class="num">Qty</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+<footer>Runs entirely in your browser with OpenSCAD compiled to WebAssembly. Dimensions in millimetres. Hardware hole patterns are nominal: measure your parts. <a href="https://github.com/DrFlGd/Arcade-Cabinet-Workshop">Source on GitHub</a></footer>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
