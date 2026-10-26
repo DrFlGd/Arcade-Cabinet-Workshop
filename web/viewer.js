@@ -30,8 +30,14 @@ export class Viewer {
     for (const [k, c] of Object.entries(COLORS)) {
       this.materials[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0.05, side: THREE.DoubleSide, transparent: k === "plexi", opacity: k === "plexi" ? 0.35 : 1, clippingPlanes: [] });
       if (k === "screen") { this.materials[k].roughness = 0.3; }
+      if (k === "plexi") {
+        // Plexi lies flat on its panel, so their faces are coplanar. Pull it toward the
+        // camera in depth and do not write depth, otherwise the two fight and flicker.
+        Object.assign(this.materials[k], { depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, roughness: 0.1, metalness: 0 });
+      }
     }
     this.floor = new THREE.GridHelper(4000, 40, 0x999999, 0xdddddd);
+    this.floor.material.depthWrite = false;   // grid lines never fight the cabinet's bottom faces
     this.scene.add(this.floor);
     window.addEventListener("resize", () => this.resize());
     this.resize();
@@ -62,6 +68,7 @@ export class Viewer {
         geom = new THREE.ExtrudeGeometry(shapesCache[item.part], { depth: item.t, bevelEnabled: false, curveSegments: 4 });
       }
       const mesh = new THREE.Mesh(geom, this.materials[item.kind] || this.materials.panel);
+      if (item.kind === "plexi") mesh.renderOrder = 10;   // after every opaque part
       mesh.matrixAutoUpdate = false;
       const m = item.m; mesh.matrix.set(m[0][0], m[0][1], m[0][2], m[0][3], m[1][0], m[1][1], m[1][2], m[1][3], m[2][0], m[2][1], m[2][2], m[2][3], 0, 0, 0, 1);
       this.root.add(mesh);

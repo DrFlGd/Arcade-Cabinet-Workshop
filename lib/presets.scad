@@ -152,8 +152,8 @@ preset_table = [
     ["screen_top_bottom_margin", 25, "geometry"],
     ["vpin_backbox_enabled", true, "geometry"],
     ["vpin_backbox_height", 520, "geometry"],
-    ["vpin_backbox_display_width", 600, "geometry"],
-    ["vpin_backbox_display_height", 335, "geometry"],
+    ["backglass_screen_width", 598, "screen"],      // 27 in 16:9 backglass (drawing: 600 x 335 opening)
+    ["backglass_screen_height", 336, "screen"],
     ["material_thickness", 18, "material"],
     ["screen_width", 1073, "screen"],              // 49 in 16:9 active area, drawn portrait
     ["screen_height", 604, "screen"],

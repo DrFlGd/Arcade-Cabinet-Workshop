@@ -253,13 +253,18 @@ pinball_start_button_diameter = 24;
 // Extra buttons on the apron (nudge, extra ball ...)
 vpin_apron_button_count = 0; // [0:1:6]
 vpin_backbox_enabled = true;
-// 0 = cabinet width
+// Backglass (upper) monitor, visible active area in mm, mounted landscape in the backbox. Together with the playfield screen it sets the automatic cabinet width.
+backglass_screen_width = 476;
+backglass_screen_height = 268;
+// Wood border left and right of the backglass opening, and above it
+backglass_side_margin = 30;
+backglass_top_margin = 30;
+// 0 = cabinet width (widened automatically for the backglass monitor)
 vpin_backbox_width = 0;
-vpin_backbox_height = 520;
+// 0 = automatic: backglass opening + DMD / speaker zone below it
+vpin_backbox_height = 0;
 // Front-to-back depth of the backbox. It sits on the rear deck with its back flush with the cabinet rear; deeper than the deck overhangs the playfield glass like a real machine.
 vpin_backbox_depth = 220;
-vpin_backbox_display_width = 600;
-vpin_backbox_display_height = 335;
 vpin_backbox_display_corner_radius = 4;
 vpin_backbox_speaker_count = 2;
 vpin_backbox_speaker_diameter = 85;

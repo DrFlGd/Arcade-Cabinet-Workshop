@@ -15,6 +15,7 @@ button.ghost { background: transparent; color: #fff; border-color: #3a434d; }
 main { flex: 1; display: grid; grid-template-columns: 380px 1fr; min-height: 0; }
 #sidebar { overflow: auto; padding: 12px; border-right: 1px solid var(--line); background: #eef0f3; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.card h2.sub { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
 .card h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .field { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; padding: 4px 6px; border-radius: 6px; }
 .field.changed { background: var(--chg); }

@@ -23,17 +23,32 @@
 <main>
   <aside id="sidebar">
     <section class="card">
-      <h2>Screen</h2>
-      <label class="field"><span class="field-label">Monitor</span>
-        <select id="monitor-select"></select>
-        <small>Sizes are computed from the diagonal and aspect ratio. Measure the real active area before cutting.</small></label>
-      <div class="row">
-        <label class="field"><span class="field-label">Active width (mm)</span><input id="screen_width" type="number" step="1"></label>
-        <label class="field"><span class="field-label">Active height (mm)</span><input id="screen_height" type="number" step="1"></label>
+      <h2 id="main-screen-title">Screen</h2>
+      <div class="monitor-picker" data-w="screen_width" data-h="screen_height">
+        <label class="field"><span class="field-label">Monitor</span>
+          <select class="monitor-select"></select>
+          <small>Sizes are computed from the diagonal and aspect ratio. Measure the real active area before cutting.</small></label>
+        <div class="row">
+          <label class="field"><span class="field-label">Active width (mm)</span><input class="mon-w" type="number" step="1"></label>
+          <label class="field"><span class="field-label">Active height (mm)</span><input class="mon-h" type="number" step="1"></label>
+        </div>
+        <p class="hint mon-need"></p>
+      </div>
+      <div id="backglass-card" class="hidden">
+        <h2 class="sub">Backglass monitor</h2>
+        <div class="monitor-picker" data-w="backglass_screen_width" data-h="backglass_screen_height" data-kind="backglass">
+          <label class="field"><span class="field-label">Monitor</span><select class="monitor-select"></select>
+            <small>Mounted landscape in the backbox. The backbox height and, if needed, the cabinet width grow to fit it.</small></label>
+          <div class="row">
+            <label class="field"><span class="field-label">Active width (mm)</span><input class="mon-w" type="number" step="1"></label>
+            <label class="field"><span class="field-label">Active height (mm)</span><input class="mon-h" type="number" step="1"></label>
+          </div>
+          <p class="hint mon-need"></p>
+        </div>
       </div>
       <label class="field"><span class="field-label">Max cabinet width I can fit (mm, optional)</span><input id="fit-width" type="number" step="10" placeholder="e.g. 650">
-        <small>Monitors that would need a wider cabinet are greyed out in the list.</small></label>
-      <p id="screen-need" class="hint"></p>
+        <small>Monitors that would need a wider cabinet are greyed out in the lists.</small></label>
+      <p id="width-summary" class="hint"></p>
     </section>
     <section class="card">
       <h2>Cabinet</h2>

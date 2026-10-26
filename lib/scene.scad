@@ -35,7 +35,8 @@ module all_sheet_2d() { sheet_layout(all_sheet_parts()); }
 module print_scene() {
     echo(str("INFO:{\"style\":", js(c_style), ",\"preset\":", js(design_preset), ",\"W\":", c_W, ",\"D\":", c_D + (c_is_arcade ? c_O : 0),
              ",\"H\":", c_H + c_vpin_Z0 + (c_backbox_on ? c_bb_h : 0), ",\"body_D\":", c_D, ",\"body_H\":", c_H, ",\"IW\":", IW, ",\"T\":", T, ",\"PT\":", PT,
-             ",\"screen_w\":", SW, ",\"screen_h\":", SH, ",\"control_height\":", c_C + c_vpin_Z0, ",\"lift\":", c_vpin_Z0, "}"));
+             ",\"screen_w\":", SW, ",\"screen_h\":", SH, ",\"control_height\":", c_C + c_vpin_Z0, ",\"lift\":", c_vpin_Z0,
+             ",\"backglass_w\":", c_backbox_on ? c_bg_w : 0, ",\"backglass_h\":", c_backbox_on ? c_bg_h : 0, ",\"backbox_h\":", c_backbox_on ? c_bb_h : 0, "}"));
     for (p = all_parts())
         echo(str("BOM:{\"part\":", js(p[0]), ",\"material\":", js(p[1]), ",\"w\":", round(p[2] * 10) / 10, ",\"len\":", round(p[3] * 10) / 10, ",\"qty\":", p[4], "}"));
     parts = with_qty(all_sheet_parts());
@@ -58,7 +59,7 @@ module print_scene() {
     if (panel_exists("control_panel")) scene_part("control_plexi", "plexi", PT, L * m_place(part_rec("control_panel")) * m_tr([0, 0, T]));
     scene_part("screen_plexi", "plexi", PT, L * m_place(screen_rec()) * m_tr([0, 0, T]));
     if (c_marquee_on) scene_part("marquee_plexi", "plexi", PT, L * m_place(part_rec("marquee_frame")) * m_tr([0, 0, T]));
-    scene_box("screen", [SW, SH, 2], L * m_place(screen_rec()) * m_tr([(IW - SW) / 2, screen_open_y0() + screen_cutout_clearance, T + PT + 0.5]));
+    scene_box("screen", [SW, SH, 2], L * m_place(screen_rec()) * m_tr([(IW - SW) / 2, screen_open_y0() + screen_cutout_clearance, -2.5]));
     if (vesa_mount_panel_enabled && vesa_adjustable()) {
         S = L * m_place(screen_rec());
         scene_part("vesa_mount_panel", "inner", T, S * m_tr([T, vesa_mount_local_y0(), vesa_mount_local_z0()]));
@@ -70,7 +71,7 @@ module print_scene() {
         if (c_coin_door) scene_part("coin_door", "door", T, L * m_tr([T + (IW - coin_door_width) / 2, p_o(fp)[0] - T, c_coin_bottom]) * M_PANEL_Y);
         if (c_kd_on) scene_part("keyboard_drawer_front", "door", T, L * m_tr([T + (IW - c_kd_w) / 2, p_o(fp)[0] - T, c_kd_z]) * M_PANEL_Y);
     }
-    if (c_rsd_on) { rp = part_rec("rear"); scene_part("rear_service_door", "door", T, L * m_tr([T + (IW - c_rsd_w) / 2, p_o(rp)[0], c_rsd_z]) * M_PANEL_Y); }
+    if (c_rsd_on) { scene_part("rear_service_door", "door", T, L * m_tr([T + (IW - c_rsd_w) / 2, rear_door_y0(), c_rsd_z]) * M_PANEL_Y); }
     if (c_backbox_on) {
         X = c_bb_x0; Y = c_bb_y0; Z = c_bb_z0;
         scene_part("vpin_backbox_side", "side", T, L * m_tr([X, Y, Z]) * M_PROFILE_X);
@@ -80,6 +81,7 @@ module print_scene() {
         scene_part("vpin_backbox_bottom", "inner", T, L * m_tr([X + T, Y + T, Z]));
         scene_part("vpin_backbox_top", "panel", T, L * m_tr([X + T, Y, Z + c_bb_h - T]));
         scene_part("vpin_backbox_plexi", "plexi", PT, L * m_tr([X + T, Y - PT - 0.5, Z]) * M_PANEL_Y);
+        scene_box("screen", [c_bg_w, 2, c_bg_h], L * m_tr([X + T + (c_bb_iw - c_bg_w) / 2, Y + T + 0.5, Z + bb_display_y0() + screen_cutout_clearance]));
     }
     if (c_full_vpin) { leg = vpin_leg_size;
         for (x = [T + 25, c_W - T - 25 - leg]) for (y = [55, c_D - 95]) scene_box("leg", [leg, leg, c_vpin_Z0], m_tr([x, y, 0]));
