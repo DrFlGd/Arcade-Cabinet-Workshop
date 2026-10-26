@@ -93,6 +93,8 @@ Key dimensions and what drives them:
 | Head height | screen top, `standup_neck_rise`, marquee height. `cabinet_height` adds to the upper bezel if larger |
 | Cabinet depth | `cabinet_depth` or an automatic value per style |
 | Pinball depth | `vpin_rear_step + sqrt((screen_len + apron)^2 - rise^2)` when `cabinet_depth = 0` |
+| Pinball width | the wider of the playfield monitor (portrait, plus `vpin_side_screen_margin`) and the backglass monitor (plus `backglass_side_margin`), at least 700 mm |
+| Backbox height | backglass opening + `backglass_top_margin` + the DMD / speaker zone, when `vpin_backbox_height = 0` |
 
 `panel_inset` sets every cross panel in from the side-panel edge (T-moulding reveal). Tab/slot joinery needs an inset large enough to keep the slots inside the side panel; the generator asserts the minimum.
 

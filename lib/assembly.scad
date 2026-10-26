@@ -53,7 +53,7 @@ module plexi_and_screen() {
         if (c_marquee_on) color(col_plexi) place_panel(part_rec("marquee_frame")) translate([0, 0, T]) linear_extrude(PT) marquee_plexi_2d();
     }
     if (show_screen_preview)
-        color(col_screen) place_panel(screen_rec()) translate([(IW - SW) / 2, screen_open_y0() + screen_cutout_clearance, T + PT + 0.5]) cube([SW, SH, 2]);
+        color(col_screen) place_panel(screen_rec()) translate([(IW - SW) / 2, screen_open_y0() + screen_cutout_clearance, -2.5]) cube([SW, SH, 2]);   // monitor face just behind the panel
 }
 
 module vesa_mount() {
@@ -77,7 +77,7 @@ module doors_and_drawers() {
     fp = part_rec("front_panel");
     if (c_coin_door) color([0.35, 0.35, 0.38]) translate([T + (IW - coin_door_width) / 2, p_o(fp)[0] - T, c_coin_bottom]) extrude_panel_along_y(T) coin_door_2d();
     if (c_kd_on) color([0.45, 0.40, 0.33]) translate([T + (IW - c_kd_w) / 2, p_o(fp)[0] - T, c_kd_z]) extrude_panel_along_y(T) keyboard_drawer_front_2d();
-    if (c_rsd_on) { rp = part_rec("rear"); color([0.45, 0.40, 0.33]) translate([T + (IW - c_rsd_w) / 2, p_o(rp)[0], c_rsd_z]) extrude_panel_along_y(T) rear_service_door_2d(); }
+    if (c_rsd_on) { color([0.45, 0.40, 0.33]) translate([T + (IW - c_rsd_w) / 2, rear_door_y0(), c_rsd_z]) extrude_panel_along_y(T) rear_service_door_2d(); }
 }
 
 module backbox() {
@@ -89,6 +89,7 @@ module backbox() {
         color(col_inner) translate([X + T, Y + T, Z]) linear_extrude(T) vpin_backbox_bottom_2d();
         color(col_panel) translate([X + T, Y, Z + c_bb_h - T]) linear_extrude(T) vpin_backbox_top_2d();
         if (show_plexi_preview) color(col_plexi) translate([X + T, Y - PT - 0.5, Z]) extrude_panel_along_y(PT) vpin_backbox_front_2d(true);
+        if (show_screen_preview) color(col_screen) translate([X + T + (c_bb_iw - c_bg_w) / 2, Y + T + 0.5, Z + bb_display_y0() + screen_cutout_clearance]) cube([c_bg_w, 2, c_bg_h]);
     }
 }
 

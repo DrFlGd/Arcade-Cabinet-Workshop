@@ -60,7 +60,7 @@ function updateStyleVisibility() {
   const style = val("cabinet_style"); const isVpin = style.startsWith("vpin"); const isStandup = style === "standup"; const isBartop = style === "bartop";
   for (const el of document.querySelectorAll("[data-param]")) {
     const n = el.dataset.param; let show = true;
-    if (n.startsWith("vpin_")) show = isVpin;
+    if (n.startsWith("vpin_") || n.startsWith("backglass_") || n.startsWith("pinball_")) show = isVpin;
     else if (n.startsWith("standup_")) show = isStandup;
     else if (n.startsWith("bartop_")) show = isBartop;
     else if (/^(marquee|keyboard_drawer|coin_door|kick_drop|control_fascia|speaker|button|joystick|players|aux_|admin_|trackball|control_panel|controls_|player_spacing|upper_bezel|standup_)/.test(n)) show = !isVpin;
@@ -79,32 +79,65 @@ function buildForm() {
   for (const n of Object.keys(state.byName)) syncInputs(n);
 }
 
-// ---------- screen picker ----------
+// ---------- monitor pickers ----------
+// Two pickers share this code: the main / playfield screen and, for pinball
+// styles, the backglass monitor. Each picker is a .monitor-picker element whose
+// data-w / data-h name the generator parameters it edits.
+const isVpinStyle = () => String(val("cabinet_style")).startsWith("vpin");
+function playfieldNeed(w, h) {
+  const orient = val("screen_orientation");
+  const portrait = orient === "portrait" || (orient === "auto" && isVpinStyle());
+  const across = portrait ? Math.min(w, h) : Math.max(w, h);
+  const margin = isVpinStyle() ? val("vpin_side_screen_margin") : val("screen_side_margin");
+  return Math.round(across + 2 * margin + 2 * val("material_thickness"));
+}
+function backglassNeed(w, h) {
+  return Math.round(Math.max(w, h) + 2 * val("screen_cutout_clearance") + 2 * val("backglass_side_margin") + 2 * val("material_thickness"));
+}
+const pickers = () => [...document.querySelectorAll(".monitor-picker")];
+const needFor = (pk) => (pk.dataset.kind === "backglass" ? backglassNeed : playfieldNeed);
 function buildMonitorPicker() {
-  const sel = $("#monitor-select");
-  const custom = document.createElement("option"); custom.value = "custom"; custom.textContent = "Custom active area"; sel.appendChild(custom);
-  MONITORS.forEach((m, i) => { const o = document.createElement("option"); o.value = i; o.textContent = m.label; sel.appendChild(o); });
-  sel.addEventListener("change", () => { if (sel.value === "custom") return; const m = MONITORS[sel.value]; const a = activeArea(m.d, m.aspect); state.overrides.screen_width = a.w; state.overrides.screen_height = a.h; set("screen_width", a.w); set("screen_height", a.h); });
-  $("#screen_width").addEventListener("change", (e) => { sel.value = "custom"; set("screen_width", e.target.value); });
-  $("#screen_height").addEventListener("change", (e) => { sel.value = "custom"; set("screen_height", e.target.value); });
+  for (const pk of pickers()) {
+    const sel = pk.querySelector(".monitor-select"), wIn = pk.querySelector(".mon-w"), hIn = pk.querySelector(".mon-h");
+    const W = pk.dataset.w, H = pk.dataset.h;
+    const custom = document.createElement("option"); custom.value = "custom"; custom.textContent = "Custom active area"; sel.appendChild(custom);
+    MONITORS.forEach((m, i) => { const o = document.createElement("option"); o.value = i; o.textContent = m.label; sel.appendChild(o); });
+    sel.addEventListener("change", () => { if (sel.value === "custom") return; const m = MONITORS[sel.value]; const a = activeArea(m.d, m.aspect); set(W, a.w); set(H, a.h); });
+    wIn.addEventListener("change", () => set(W, wIn.value));
+    hIn.addEventListener("change", () => set(H, hIn.value));
+  }
   $("#fit-width").addEventListener("input", updateMonitorHints);
   updateMonitorHints();
 }
-function neededWidth(w, h) {
-  const orient = val("screen_orientation"); const style = val("cabinet_style");
-  const portrait = orient === "portrait" || (orient === "auto" && style.startsWith("vpin"));
-  const across = portrait ? Math.min(w, h) : Math.max(w, h);
-  return Math.round(across + 2 * val("screen_side_margin") + 2 * val("material_thickness") + 2 * val("panel_inset"));
-}
 function updateMonitorHints() {
-  const sel = $("#monitor-select"); if (!sel) return;
-  const sw = val("screen_width"), sh = val("screen_height");
-  $("#screen_width").value = sw; $("#screen_height").value = sh;
+  if (!pickers().length || !state.byName.cabinet_style) return;
+  const vpin = isVpinStyle() && val("vpin_backbox_enabled");
+  $("#backglass-card").classList.toggle("hidden", !vpin);
+  $("#main-screen-title").textContent = isVpinStyle() ? "Playfield monitor" : "Screen";
   const limit = Number($("#fit-width").value) || 0;
-  let matched = false;
-  for (const o of sel.options) { if (o.value === "custom") continue; const m = MONITORS[o.value]; const a = activeArea(m.d, m.aspect); const need = neededWidth(a.w, a.h); const fits = !limit || need <= limit; o.textContent = `${m.label}  ·  ${a.w}×${a.h} mm  ·  cabinet ≥ ${need} mm${limit ? (fits ? " ✓" : " ✗") : ""}`; o.disabled = limit && !fits; if (a.w === sw && a.h === sh) { sel.value = o.value; matched = true; } }
-  if (!matched) sel.value = "custom";
-  $("#screen-need").textContent = `This screen needs a cabinet at least ${neededWidth(sw, sh)} mm wide (screen + side margins + sides).`;
+  const needs = [];
+  for (const pk of pickers()) {
+    if (pk.dataset.kind === "backglass" && !vpin) continue;
+    const sel = pk.querySelector(".monitor-select"); const W = pk.dataset.w, H = pk.dataset.h;
+    const sw = Number(val(W)), sh = Number(val(H)); const need = needFor(pk);
+    pk.querySelector(".mon-w").value = sw; pk.querySelector(".mon-h").value = sh;
+    let matched = false;
+    for (const o of sel.options) {
+      if (o.value === "custom") continue;
+      const m = MONITORS[o.value]; const a = activeArea(m.d, m.aspect); const n = need(a.w, a.h); const fits = !limit || n <= limit;
+      o.textContent = `${m.label}  ·  ${a.w}×${a.h} mm  ·  cabinet ≥ ${n} mm${limit ? (fits ? " ✓" : " ✗") : ""}`;
+      o.disabled = !!limit && !fits;
+      if (a.w === sw && a.h === sh) { sel.value = o.value; matched = true; }
+    }
+    if (!matched) sel.value = "custom";
+    const n = need(sw, sh); needs.push(n);
+    pk.querySelector(".mon-need").textContent = `Needs a cabinet at least ${n} mm wide.`;
+  }
+  const minimum = isVpinStyle() ? 700 : (Number(val("players")) === 2 ? 700 : 560);
+  const auto = Math.max(minimum, ...needs); const forced = Number(val("cabinet_width")) || 0;
+  $("#width-summary").textContent = forced
+    ? `Cabinet width is set to ${forced} mm${forced < Math.max(...needs) ? `, but the monitors need ${Math.max(...needs)} mm` : ""}.`
+    : `Automatic cabinet width: ${auto} mm${needs.length > 1 ? ` (the wider of the two monitors decides, minimum ${minimum} mm)` : ""}.`;
 }
 
 // ---------- rendering pipeline ----------
@@ -159,7 +192,7 @@ function renderSummary() {
   const wood = state.bom.filter((b) => b.material === "wood").reduce((a, b) => a + b.w * b.len * b.qty, 0) / 1e6;
   $("#summary").innerHTML = `
     <div><b>Overall</b> ${mm(i.W)} × ${mm(i.D)} × ${mm(i.H)} <small>(${inch(i.W)} × ${inch(i.D)} × ${inch(i.H)}, W × D × H)</small></div>
-    <div><b>Screen</b> ${i.screen_w} × ${i.screen_h} mm active area · <b>Inner width</b> ${mm(i.IW)} · <b>Control height</b> ${mm(i.control_height)}</div>
+    <div><b>${i.backglass_w ? "Playfield" : "Screen"}</b> ${i.screen_w} × ${i.screen_h} mm${i.backglass_w ? ` · <b>Backglass</b> ${i.backglass_w} × ${i.backglass_h} mm · <b>Backbox</b> ${mm(i.backbox_h)} tall` : ""} · <b>Inner width</b> ${mm(i.IW)}${i.style.startsWith("vpin") ? "" : ` · <b>Control height</b> ${mm(i.control_height)}`}</div>
     <div><b>Parts</b> ${state.bom.reduce((a, b) => a + b.qty, 0)} · <b>Wood</b> ${wood.toFixed(2)} m² (${Math.ceil(wood / (2.44 * 1.22 * 0.7))} sheets of 2440×1220 at 70 % yield)</div>`;
 }
 function renderParts() {

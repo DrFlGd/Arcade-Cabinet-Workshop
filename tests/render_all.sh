@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 OUT=${1:-/tmp/acw-render}; mkdir -p "$OUT"
 SCAD=arcade_cabinet_workshop.scad
 PRESETS="custom tinyarcade_bartop koenigs_mame compact_1600 asteroids classic_80s we_build_stuff vpin_731x1308"
-STYLES='cabinet_style="bartop" cabinet_style="vpin" cabinet_style="vpin_bartop" panel_joinery="tab_slot";panel_inset=12 panel_joinery="screw" marquee_mode="off" players=1;trackball_enabled=true panel_joinery="tab_slot";panel_inset=12;joinery_tab_depth=8 vesa_mount_style="fixed"'
+STYLES='cabinet_style="bartop" cabinet_style="vpin";backglass_screen_width=708;backglass_screen_height=398 cabinet_style="vpin" cabinet_style="vpin_bartop" panel_joinery="tab_slot";panel_inset=12 panel_joinery="screw" marquee_mode="off" players=1;trackball_enabled=true panel_joinery="tab_slot";panel_inset=12;joinery_tab_depth=8 vesa_mount_style="fixed"'
 fail=0
 run() { # name, extra -D args...
   local name=$1; shift

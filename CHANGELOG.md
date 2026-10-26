@@ -1,5 +1,12 @@
 # Changelog
 
+## v8.2 (2026-10-26)
+
+- Fix: the rear panel's service-door opening, vents and cable hole were laid out from the top of the panel, so in 3D the door sat over solid wood and the opening was near the top. The rear panel now measures up from the floor, in the preview and in the exported part. Re-export `rear_panel` if you cut one from v8.0 or v8.1.
+- Pinball: new backglass monitor parameters (`backglass_screen_width`, `backglass_screen_height`, `backglass_side_margin`, `backglass_top_margin`). The backbox opening is cut for that monitor, `vpin_backbox_height = 0` sizes the backbox automatically, and the automatic cabinet width is the wider of what the playfield and backglass monitors need. Replaces `vpin_backbox_display_width/height`.
+- Web app: a second monitor picker for the backglass on pinball styles, with the cabinet width each option needs; the summary shows both monitors and the backbox height.
+- Web app: transparent plexi no longer flickers against the panel it sits on, and the screen preview now sits behind its panel instead of in front of the plexi.
+
 ## v8.1 (2026-10-25)
 
 - Web app in `web/`: browser-only configurator with monitor picker, generated parameter form, 3D preview, parts gallery, sheet layout, cut list, zip export (DXF + SVG per part) and shareable links. OpenSCAD runs as WebAssembly in a worker pool.

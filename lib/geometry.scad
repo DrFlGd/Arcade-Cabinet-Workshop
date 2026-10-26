@@ -81,8 +81,17 @@ c_kd_z = cfg("keyboard_drawer_bottom_z", keyboard_drawer_bottom_z);
 c_kd_d = cfg("keyboard_drawer_depth", keyboard_drawer_depth);
 
 // ---------- Width ----------
+// Backglass monitor (pinball styles), always landscape in the backbox.
+c_bg_w = let(a = cfg("backglass_screen_width", backglass_screen_width), b = cfg("backglass_screen_height", backglass_screen_height)) max(a, b);
+c_bg_h = let(a = cfg("backglass_screen_width", backglass_screen_width), b = cfg("backglass_screen_height", backglass_screen_height)) min(a, b);
+c_bg_margin_side = cfg("backglass_side_margin", backglass_side_margin);
+c_bg_margin_top = cfg("backglass_top_margin", backglass_top_margin);
+c_bb_disp_w = c_bg_w + 2 * screen_cutout_clearance;     // opening in the backbox front
+c_bb_disp_h = c_bg_h + 2 * screen_cutout_clearance;
+function backglass_needed_width() = c_bb_disp_w + 2 * c_bg_margin_side + 2 * T;
+function playfield_needed_width() = SW + 2 * cfg("vpin_side_screen_margin", vpin_side_screen_margin) + 2 * T;
 function auto_cab_width() =
-    c_is_vpin ? max(700, SW + 2 * cfg("vpin_side_screen_margin", vpin_side_screen_margin) + 2 * T)
+    c_is_vpin ? max(700, playfield_needed_width(), c_backbox_on ? backglass_needed_width() : 0)
               : max(c_players == 2 ? 700 : 560, SW + 2 * c_margin_side + 2 * T);
 c_W = let(w = cfg("cabinet_width", cabinet_width)) w > 0 ? w : auto_cab_width();
 IW = c_W - 2 * T;
@@ -128,7 +137,7 @@ c_H = c_is_vpin ? c_vpin_RH : c_H_arcade;
 //   extra:    non-wood material between the profile line and the panel (plexi)
 function arcade_faces() = concat(
     [["floor", [0, 0], [c_D, 0], false, false, false, false, 0, 0],
-     ["rear", [c_D, 0], [c_D, c_H], true, true, false, false, c_inset, 0],
+     ["rear", [c_D, 0], [c_D, c_H], true, false, false, false, c_inset, 0],
      ["top_panel", [c_D, c_H], [c_head_front, c_H], true, false, true, !c_marquee_on, c_inset, 0]],
     c_marquee_on ? [["marquee_frame", [c_head_front, c_H], [c_head_front, c_mb], true, true, true, true, c_inset, 0]] : [],
     [["upper_bezel", [c_head_front, c_mb], c_S1, true, true, false, false, c_inset, 0],
@@ -141,7 +150,7 @@ function arcade_faces() = concat(
 
 function vpin_faces() = [
     ["floor", [0, 0], [c_D, 0], false, false, false, false, 0, 0],
-    ["rear", [c_D, 0], [c_D, c_vpin_RH], true, true, false, false, c_inset, 0],
+    ["rear", [c_D, 0], [c_D, c_vpin_RH], true, false, false, false, c_inset, 0],
     ["vpin_rear_deck", [c_D, c_vpin_RH], c_vpin_B3, !c_backbox_on, false, true, false, c_inset, 0],
     ["vpin_playfield", c_vpin_B3, c_vpin_Pf, true, true, true, true, c_inset + PT, PT],
     ["vpin_apron", c_vpin_Pf, c_vpin_A, true, true, false, true, c_inset, 0],
@@ -276,20 +285,24 @@ c_rsd_h = let(h = cfg("rear_service_door_height", rear_service_door_height)) c_i
 
 // ---------- Backbox ----------
 c_bb_w = let(w = cfg("vpin_backbox_width", vpin_backbox_width)) w > 0 ? w : c_W;
-c_bb_h = cfg("vpin_backbox_height", vpin_backbox_height);
+// Lower zone of the backbox front: DMD and speakers side by side, centred vertically.
+c_bb_lower_h = max(vpin_backbox_speaker_count > 0 ? vpin_backbox_speaker_diameter : 0, vpin_backbox_dmd_enabled ? vpin_backbox_dmd_height : 0) + 60;
+c_bb_auto_h = c_bg_margin_top + c_bb_disp_h + 20 + c_bb_lower_h;
+c_bb_h = let(h = cfg("vpin_backbox_height", vpin_backbox_height)) h > 0 ? h : c_bb_auto_h;
 c_bb_d = max(cfg("vpin_backbox_depth", vpin_backbox_depth), 2 * T + 20);
 c_bb_iw = c_bb_w - 2 * T;
 c_bb_x0 = (c_W - c_bb_w) / 2;
 c_bb_y0 = c_D - c_bb_d;
 c_bb_z0 = c_vpin_RH;
-c_bb_disp_w = cfg("vpin_backbox_display_width", vpin_backbox_display_width);
-c_bb_disp_h = cfg("vpin_backbox_display_height", vpin_backbox_display_height);
-function bb_display_y0() = c_bb_h - c_bb_disp_h - 28;
+function bb_display_y0() = c_bb_h - c_bb_disp_h - c_bg_margin_top;
 function bb_lower_center_y() = max(55, bb_display_y0() / 2);
 
 // ---------- Checks ----------
 function front_panel_len() = p_len(panel_by_name("front_panel"));
 function rear_panel_len() = p_len(panel_by_name("rear"));
+// The rear face is not reversed, so the rear panel's local y runs up from the floor and
+// door / vent / cable-hole heights in rear_panel_2d() are heights above the floor.
+function rear_door_y0() = c_D - c_inset - T;   // inner face of the rear panel
 function inside_corner_r() = max(screen_corner_radius, c_tool_r);
 c_tab_through = panel_joinery == "tab_slot" && joinery_tab_depth >= T - 1e-6;
 c_tab_blind = panel_joinery == "tab_slot" && !c_tab_through;
@@ -315,8 +328,8 @@ assert(!c_is_vpin || c_vpin_run > 100, "vpin_rear_step leaves no room for the pl
 assert(!c_is_vpin || c_vpin_pf_len >= c_scr_len - 1e-6, str("Pinball playfield is ", c_vpin_pf_len, " mm long but the screen panel needs ", c_scr_len, " mm. Set cabinet_depth = 0 for automatic sizing."));
 assert(!c_is_vpin || c_vpin_rise >= 0, "Pinball rear body height must be >= front body height.");
 assert(!c_backbox_on || c_bb_w <= c_W + 0.01, "Backbox width cannot exceed the cabinet width.");
-assert(!c_backbox_on || c_bb_disp_w + 20 <= c_bb_iw, "Backbox display opening is too wide.");
-assert(!c_backbox_on || c_bb_disp_h + 60 <= c_bb_h, "Backbox is too short for the display opening and the speaker/DMD zone.");
+assert(!c_backbox_on || c_bb_disp_w + 20 <= c_bb_iw, str("The backglass monitor (", c_bg_w, " mm wide) does not fit the backbox: it needs a cabinet at least ", ceil(backglass_needed_width()), " mm wide. Set cabinet_width / vpin_backbox_width to 0 for automatic sizing."));
+assert(!c_backbox_on || c_bb_disp_h + c_bg_margin_top + 60 <= c_bb_h, str("The backbox is too short for the backglass monitor: it needs at least ", ceil(c_bb_auto_h), " mm. Set vpin_backbox_height = 0 for automatic sizing."));
 assert(!c_coin_door || coin_door_width + 10 <= IW, "Coin door is too wide for the front panel.");
 assert(!c_coin_door || c_coin_bottom + coin_door_height + 5 <= front_panel_len(), "Coin door does not fit on the front panel.");
 assert(!c_kd_on || c_kd_w + 10 <= IW, "Keyboard drawer is too wide for the front panel.");
